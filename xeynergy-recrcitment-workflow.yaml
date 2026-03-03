@@ -1,0 +1,132 @@
+kind: workflow
+trigger:
+  kind: OnConversationStart
+  id: trigger_wf
+  actions:
+    - kind: InvokeAzureAgent
+      id: node-1772510530386
+      agent:
+        name: message-classifier-agent
+      conversationId: =System.ConversationId
+      input:
+        messages: ""
+      output:
+        autoSend: true
+        responseObject: Local.MessageClasifferOutput
+    - kind: InvokeAzureAgent
+      id: node-1772514064861
+      agent:
+        name: student-interaction-agent
+      conversationId: =System.ConversationId
+      input:
+        messages: ""
+      output:
+        autoSend: true
+        responseObject: Local.ConversationMetadataOutput
+    - kind: SetVariable
+      id: node-1772512264254
+      variable: Local.MessageIntent
+      value: =Local.MessageClasifferOutput.intent
+    - kind: SetVariable
+      id: node-1772514129623
+      variable: Local.CvStatus
+      value: =Local.ConversationMetadataOutput.cv_status
+    - kind: ConditionGroup
+      conditions:
+        - condition: =Local.MessageIntent = "company-inquiry"
+          actions:
+            - kind: InvokeAzureAgent
+              id: node-1772512539251
+              agent:
+                name: company-knowledge-agent
+              conversationId: =System.ConversationId
+              input:
+                messages: ""
+              output:
+                autoSend: true
+            - kind: EndConversation
+              id: node-1772512398750
+          id: if-node-1772512324963-0
+        - condition: =Local.MessageIntent = "vacancy-inquiry"
+          actions:
+            - kind: InvokeAzureAgent
+              id: node-1772512764089
+              agent:
+                name: vacancy-knowledge-agent
+              conversationId: =System.ConversationId
+              input:
+                messages: ""
+              output:
+                autoSend: true
+            - kind: EndConversation
+              id: node-1772512404425
+          id: if-node-1772512324963-2dffgohp
+        - condition: =Local.MessageIntent = "cv-submission"
+          actions:
+            - kind: InvokeAzureAgent
+              id: node-1772513243577
+              agent:
+                name: vacancy-knowledge-agent
+              conversationId: =System.ConversationId
+              input:
+                messages: ""
+              output:
+                autoSend: true
+            - kind: InvokeAzureAgent
+              id: node-1772513112717
+              agent:
+                name: cv-processing-agent
+              conversationId: =System.ConversationId
+              input:
+                messages: ""
+              output:
+                autoSend: true
+                responseObject: Local.CvProcessingOutput
+            - kind: ConditionGroup
+              conditions:
+                - condition: =Local.CvProcessingOutput = "PASSED"
+                  actions: []
+                  id: if-node-1772520427287-0
+              id: node-1772520427287
+              elseActions:
+                - kind: InvokeAzureAgent
+                  id: node-1772520462336
+                  agent:
+                    name: email-sender-agent
+                  conversationId: =System.ConversationId
+                  input:
+                    messages: ""
+                  output:
+                    autoSend: true
+            - kind: EndConversation
+              id: node-1772512407133
+          id: if-node-1772512324963-i1fpdec8
+        - condition: =Local.MessageIntent = "interview-availability" && Local.CvStatus = "PASSED"
+          actions:
+            - kind: InvokeAzureAgent
+              id: node-1772513587657
+              agent:
+                name: interview-scheduling-agent
+              conversationId: =System.ConversationId
+              input:
+                messages: ""
+              output:
+                autoSend: true
+                responseObject: Local.InterivewScheduleOutput
+            - kind: ConditionGroup
+              conditions:
+                - condition: =Local.InterivewScheduleOutput.status = "INTERVIEW_SCHEDULED"
+                  actions: []
+                  id: if-node-1772520319554-0
+              id: node-1772520319554
+              elseActions: []
+            - kind: EndConversation
+              id: node-1772512416748
+          id: if-node-1772512324963-19txh0kd
+      id: node-1772512324963
+      elseActions:
+        - kind: EndConversation
+          id: node-1772512410136
+id: ""
+name: xeynergy-recrcitment-workflow
+description: ""
